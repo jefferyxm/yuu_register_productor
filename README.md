@@ -38,3 +38,8 @@ optional arguments:
 **Example:**  
 yrp.py -n SLAVE -t uvm_reg_model.j2 -i .\test\reg.xlsx -o test -f  
 yrp.py -n SLAVE -t html.j2 -i .\test\reg.xlsx -o test
+
+## update 230730
+support generate RTL code
+  rtl gen example:
+  python -n TEST_MODULE -t rtl_reg_model.j2 -i ./test/reg.xlsx -o out01
