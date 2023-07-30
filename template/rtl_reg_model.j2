@@ -1,0 +1,135 @@
+module {{ module.lower() }}_csr (
+    //Reg output
+    {% for key0, block in root %}
+      {% for key1, reg in block %}
+        {% for key2, filed in reg%}
+    reg_{{reg.name.lower()}}_{{filed.name.lower()}},
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+    //CLK, RST
+    hclk,
+    hrst_n,
+    pclk,
+    //APB Intf
+    psel,
+    penable,
+    paddr,
+    pwrite,
+    pwdata,
+    pready,
+    prdata
+);
+
+parameter DATA_WIDTH  = 'd32;
+parameter ADDR_WIDTH  = 'd32;
+
+//Reg output
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+    {% for key2, filed in reg%}
+      {% if filed.size == 1 %}
+output reg        reg_{{reg.name.lower()}}_{{filed.name.lower()}};
+      {% else %}
+output reg [{{filed.size-1}} :0] reg_{{reg.name.lower()}}_{{filed.name.lower()}};
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+//CLK, RST
+input wire    hrst_n;
+input wire    hclk;
+input wire    pclk;
+
+//APB
+input wire                       psel;
+input wire                       penable;
+input wire                       pwrite;
+input wire  [(DATA_WIDTH-1) :0]  pwdata;
+input wire  [(ADDR_WIDTH-1) :0]  paddr;
+
+output wire [(DATA_WIDTH-1) :0]  prdata;
+output wire                      pready;
+
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+localparam R_{{reg.name.upper()}} = (32'h{{block.offset}} + 32'h{{reg.offset}});
+  {% endfor %}
+{% endfor %}
+
+wire    apb_wr_ps;
+wire    apb_rd_ps;
+wire    apb_rd_en;
+
+assign apb_wr_ps = psel & pwrite & penable;
+assign abp_rd_ps = psel & ~pwrite & penable;
+assign apb_rd_en = psel & ~pwrite;
+
+assign pready = 1'b1;
+
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+wire {{reg.name.lower()}}_wren = apb_wr_ps & (paddr[(ADDR_WIDTH-1) :0] == R_{{reg.name.upper()}});
+  {% endfor %}
+{% endfor %}
+
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+wire [(DATA_WIDTH-1) :0]  {{reg.name.lower()}}_rdata; 
+  {% endfor %}
+{% endfor %}
+
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+//reg: {{reg.name.lower()}}
+always @(posedge pclk or negedge hrst_n) begin
+  if (~hrst_n) begin
+    {% for key2, filed in reg %}
+    reg_{{reg.name.lower()}}_{{filed.name.lower()}} <= {{filed.size}}'h{{filed.reset}};
+    {% endfor %}
+  end
+  else if ({{reg.name.lower()}}_wren) begin
+    {% for key2, filed in reg %}
+    reg_{{reg.name.lower()}}_{{filed.name.lower()}} <= pwdata[{{filed.lsb_pos + filed.size -1}} :{{filed.lsb_pos}}];
+    {% endfor %}
+  end
+end
+
+  {% endfor %}
+{% endfor %}
+
+//rdata
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+assign {{reg.name.lower()}}_rdata = {
+    {% set empty_num_bits = namespace(t1=32) %}
+    {% for key2, filed in reg %}
+    {% set empty_num_bits.t1 = empty_num_bits.t1 - filed.size %}
+    {% endfor %}
+    {% if empty_num_bits.t1 != 0 %}
+    {{empty_num_bits.t1}}'h0,
+    {% endif %}
+    {% for key2, filed in reg %}
+    reg_{{reg.name.lower()}}_{{filed.name.lower()}},
+    {% endfor %}
+}
+  {% endfor %}
+{% endfor %}
+
+always @(*) begin
+  if (apb_rd_en) begin
+    case (paddr[(ADDR_WIDTH-1) :0])
+{% for key0, block in root %}
+  {% for key1, reg in block %}
+      R_{{reg.name.upper()}}[(ADDR_WIDTH-1) :0]: prdata = {{reg.name.lower()}}_rdata;
+  {% endfor %}
+{% endfor %}
+    endcase
+  end
+  else begin
+    prdata = {DATA_WIDTH{1'b0}};
+  end
+end
+
+endmodule

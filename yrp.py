@@ -66,5 +66,8 @@ if __name__ == '__main__':
     elif args.template_name == 'uvm_reg_model.j2':
         with open('%s/%s_ral_model.sv' %(args.output_path, args.module_name), 'w', encoding='UTF-8') as f:
             f.write(template.render(module=args.module_name, root=root, width=32, factory=para_factory, coverage=para_coverage))
+    elif args.template_name == 'rtl_reg_model.j2':
+        with open('%s/%s_ral_model.sv' %(args.output_path, args.module_name), 'w', encoding='UTF-8') as f:
+            f.write(template.render(module=args.module_name, root=root, width=32, factory=para_factory, coverage=para_coverage))
     
     print("Register productor generate done")
