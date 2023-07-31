@@ -87,7 +87,7 @@ always @(posedge pclk or negedge hrst_n) begin
     reg_id_id <= 32'hDEADBEEF;
   end
   else if (id_wren) begin
-    reg_id_id <= pwdata[31 :0];
+    // reg_id_id <= pwdata[31 :0];
   end
 end
 
@@ -138,26 +138,27 @@ end
 
 //rdata
 assign id_rdata = {
-    reg_id_id,
+    reg_id_id    
 }
 assign clock_rdata = {
     27'h0,
     reg_clock_div,
     reg_clock_freq,
-    reg_clock_en,
+    reg_clock_en    
 }
 assign timer_rdata = {
     26'h0,
     reg_timer_counter,
     reg_timer_enable,
-    reg_timer_start,
+    // reg_timer_start,
+    1'h0
 }
 assign inten_rdata = {
     28'h0,
     reg_inten_int3e,
     reg_inten_int2e,
     reg_inten_int1e,
-    reg_inten_int0e,
+    reg_inten_int0e    
 }
 
 always @(*) begin

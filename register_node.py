@@ -32,7 +32,8 @@ class RegisterNode(object):
 
 def walk(node, depth=0):
     for key, value in node:
-        walk(value, depth+2)
-        print('  '*depth+key)
+        print('--'*depth+key)
         for k in value.attrs.keys():
-            print("%s%s: %s" %('  '*depth, k, value.attrs[k]))
+            print("%s%s: %s" %('**'*(depth+1), k, value.attrs[k]))
+        walk(value, depth+1)
+        

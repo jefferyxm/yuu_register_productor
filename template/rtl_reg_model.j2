@@ -91,7 +91,11 @@ always @(posedge pclk or negedge hrst_n) begin
   end
   else if ({{reg.name.lower()}}_wren) begin
     {% for key2, filed in reg %}
+    {% if filed.access == "RO" %}
+    // reg_{{reg.name.lower()}}_{{filed.name.lower()}} <= pwdata[{{filed.lsb_pos + filed.size -1}} :{{filed.lsb_pos}}];
+    {% else %}
     reg_{{reg.name.lower()}}_{{filed.name.lower()}} <= pwdata[{{filed.lsb_pos + filed.size -1}} :{{filed.lsb_pos}}];
+    {% endif %}
     {% endfor %}
   end
 end
@@ -110,8 +114,21 @@ assign {{reg.name.lower()}}_rdata = {
     {% if empty_num_bits.t1 != 0 %}
     {{empty_num_bits.t1}}'h0,
     {% endif %}
+    {% set filed_cnt = namespace(t1=0) %}
     {% for key2, filed in reg %}
-    reg_{{reg.name.lower()}}_{{filed.name.lower()}},
+    {% set filed_cnt.t1 = filed_cnt.t1 + 1%}
+    {% if filed.access == "WO" %}
+    // reg_{{reg.name.lower()}}_{{filed.name.lower()}},
+    {{filed.size}}'h0{% if filed_cnt.t1 != reg.field_num%},
+    {%else%}
+
+    {%endif%}
+    {% else %}
+    reg_{{reg.name.lower()}}_{{filed.name.lower()}}{% if filed_cnt.t1 != reg.field_num%},
+    {%else%}
+    
+    {%endif%}
+    {% endif %}
     {% endfor %}
 }
   {% endfor %}
